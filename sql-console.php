@@ -58,5 +58,5 @@ pageStart('SQL console', 'sql-console');
 </form>
 <?php if ($error): ?><div class="alert <?= str_starts_with((string) $error, 'Only') ? 'alert-warning' : 'alert-danger' ?> border-0"><?= e($error) ?></div><?php endif; ?>
 <?php if ($rows): ?><div class="panel"><h2 class="h5 mb-3"><?= e(count($rows)) ?> result rows</h2><div class="table-responsive"><table class="table align-middle"><thead><tr><?php foreach (array_keys($rows[0]) as $column): ?><th><?= e($column) ?></th><?php endforeach; ?></tr></thead><tbody><?php foreach ($rows as $row): ?><tr><?php foreach ($row as $value): ?><td><?= e($value) ?></td><?php endforeach; ?></tr><?php endforeach; ?></tbody></table></div></div><?php endif; ?>
-<script>document.querySelectorAll('.query-example').forEach((button) => button.addEventListener('click', () => { const query = document.querySelector('#query'); query.value = button.dataset.query ?? ''; query.focus(); query.dispatchEvent(new Event('input')); }));</script>
+<script>document.querySelectorAll('.query-example').forEach((button) => button.addEventListener('click', () => { const query = document.querySelector('#query'); query.value = button.dataset.query ?? ''; query.form.requestSubmit(); }));</script>
 <?php pageEnd(); ?>
