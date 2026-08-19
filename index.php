@@ -12,7 +12,8 @@ $movements = [];
 $lowStock = [];
 $stockByCategory = [];
 $movementTrend = [];
-$trendDays = in_array((int) ($_GET['days'] ?? 7), [7, 30, 90], true) ? (int) $_GET['days'] : 7;
+$requestedDays = (int) ($_GET['days'] ?? 7);
+$trendDays = in_array($requestedDays, [7, 30, 90], true) ? $requestedDays : 7;
 
 try {
     $database = db();
