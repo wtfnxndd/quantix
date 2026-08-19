@@ -11,6 +11,8 @@ $summary = ['products' => 0, 'warehouses' => 0, 'movement_count' => 0, 'stock' =
 $movements = [];
 $lowStock = [];
 $stockByCategory = [];
+$stockByWarehouse = [];
+$ordersByStatus = [];
 $movementTrend = [];
 $requestedDays = (int) ($_GET['days'] ?? 7);
 $trendDays = in_array($requestedDays, [7, 30, 90], true) ? $requestedDays : 7;
@@ -57,6 +59,28 @@ try {
              AND newer.warehouse_id = m.warehouse_id AND (newer.movement_date > m.movement_date
              OR (newer.movement_date = m.movement_date AND newer.id > m.id)))) latest ON latest.product_id = p.id
          GROUP BY p.category ORDER BY stock DESC"
+    )->fetchAll();
+
+    $stockByWarehouse = $database->query(
+        "SELECT w.name AS warehouse, COALESCE(SUM(latest.stock_after), 0) AS stock
+         FROM warehouses w
+         LEFT JOIN (SELECT m.product_id, m.warehouse_id, m.stock_after FROM inventory_movements m
+             WHERE NOT EXISTS (SELECT 1 FROM inventory_movements newer WHERE newer.product_id = m.product_id
+             AND newer.warehouse_id = m.warehouse_id AND (newer.movement_date > m.movement_date
+             OR (newer.movement_date = m.movement_date AND newer.id > m.id)))) latest ON latest.warehouse_id = w.id
+         GROUP BY w.id, w.name ORDER BY stock DESC"
+    )->fetchAll();
+
+    $ordersByStatus = $database->query(
+        "SELECT status,
+                SUM(order_type = 'Sales') AS sales_orders,
+                SUM(order_type = 'Purchases') AS purchase_orders
+         FROM (
+             SELECT status, 'Sales' AS order_type FROM sales_orders
+             UNION ALL
+             SELECT status, 'Purchases' AS order_type FROM purchase_orders
+         ) order_totals
+         GROUP BY status ORDER BY status"
     )->fetchAll();
 
     $movementTrend = $database->query(
@@ -133,6 +157,11 @@ function movementClass(string $type): string
         <div class="col-lg-5"><div class="panel chart-panel"><div class="panel-heading"><div><p class="eyebrow mb-1">Last <?= e($trendDays) ?> days</p><h2 class="h5 mb-0">Movement activity</h2></div><form method="get"><label class="visually-hidden" for="dashboard-days">Activity period</label><select class="form-select form-select-sm" id="dashboard-days" name="days" onchange="this.form.submit()"><option value="7" <?= $trendDays === 7 ? 'selected' : '' ?>>7 days</option><option value="30" <?= $trendDays === 30 ? 'selected' : '' ?>>30 days</option><option value="90" <?= $trendDays === 90 ? 'selected' : '' ?>>90 days</option></select></form></div><div class="chart-wrap"><canvas id="movement-trend-chart" aria-label="Movement activity chart"></canvas></div></div></div>
     </section>
 
+    <section class="row g-4 mb-4">
+        <div class="col-lg-7"><div class="panel chart-panel"><div class="panel-heading"><div><p class="eyebrow mb-1">Network balance</p><h2 class="h5 mb-0">Stock by warehouse</h2></div><span class="chart-note">Units held</span></div><div class="chart-wrap"><canvas id="stock-warehouse-chart" aria-label="Stock by warehouse chart"></canvas></div></div></div>
+        <div class="col-lg-5"><div class="panel chart-panel"><div class="panel-heading"><div><p class="eyebrow mb-1">Order pipeline</p><h2 class="h5 mb-0">Orders by status</h2></div><span class="chart-note">Count</span></div><div class="chart-wrap"><canvas id="orders-status-chart" aria-label="Orders by status chart"></canvas></div></div></div>
+    </section>
+
     <div class="row g-4">
         <section class="col-xl-8">
             <div class="panel h-100">
@@ -160,6 +189,8 @@ function movementClass(string $type): string
 <script>
 const chartFont = { family: 'Manrope', size: 11 };
 const categoryData = <?= json_encode($stockByCategory, JSON_THROW_ON_ERROR) ?>;
+const warehouseData = <?= json_encode($stockByWarehouse, JSON_THROW_ON_ERROR) ?>;
+const orderStatusData = <?= json_encode($ordersByStatus, JSON_THROW_ON_ERROR) ?>;
 const trendData = <?= json_encode($movementTrend, JSON_THROW_ON_ERROR) ?>;
 new Chart(document.querySelector('#stock-category-chart'), {
     type: 'bar',
@@ -170,6 +201,16 @@ new Chart(document.querySelector('#movement-trend-chart'), {
     type: 'line',
     data: { labels: trendData.map((item) => item.movement_day), datasets: [{ label: 'Inbound', data: trendData.map((item) => item.inbound), borderColor: '#176b4d', backgroundColor: 'rgba(23,107,77,.1)', fill: true, tension: .35 }, { label: 'Outbound', data: trendData.map((item) => item.outbound), borderColor: '#ef795c', backgroundColor: 'transparent', tension: .35 }] },
     options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, font: chartFont } } }, scales: { x: { grid: { display: false }, ticks: { font: chartFont } }, y: { beginAtZero: true, grid: { color: '#e5ebe6' }, ticks: { font: chartFont } } } }
+});
+new Chart(document.querySelector('#stock-warehouse-chart'), {
+    type: 'bar',
+    data: { labels: warehouseData.map((item) => item.warehouse), datasets: [{ label: 'Units held', data: warehouseData.map((item) => item.stock), backgroundColor: '#5e9fbd', borderRadius: 5, borderSkipped: false }] },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, grid: { color: '#e5ebe6' }, ticks: { font: chartFont } }, y: { grid: { display: false }, ticks: { font: chartFont } } } }
+});
+new Chart(document.querySelector('#orders-status-chart'), {
+    type: 'bar',
+    data: { labels: orderStatusData.map((item) => item.status), datasets: [{ label: 'Sales', data: orderStatusData.map((item) => item.sales_orders), backgroundColor: '#ef795c', borderRadius: 4 }, { label: 'Purchases', data: orderStatusData.map((item) => item.purchase_orders), backgroundColor: '#176b4d', borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, font: chartFont } } }, scales: { x: { grid: { display: false }, ticks: { font: chartFont } }, y: { beginAtZero: true, grid: { color: '#e5ebe6' }, ticks: { stepSize: 1, font: chartFont } } } }
 });
 </script>
 </body>
