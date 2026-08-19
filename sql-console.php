@@ -38,4 +38,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $query !== '') {
     $error = $errorMessage;
 }
 pageStart('SQL console', 'sql-console');
-?><div class="mb-4"><p class="eyebrow mb-2">Administrator tools</p><h1 class="display-6 fw-semibold mb-2">SQL console</h1><p class="text-secondary mb-0">Run read-only queries against the Quantix database.</p></div><div class="alert alert-warning border-0 small">For safety, data-changing statements such as INSERT, UPDATE, DELETE, DROP, and ALTER are blocked.</div><form method="post" class="panel mb-4"><label class="form-label" for="query">SQL query</label><textarea class="form-control font-monospace" id="query" name="query" rows="5" placeholder="SELECT * FROM products LIMIT 20"><?= e($query) ?></textarea><div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mt-3"><small class="text-secondary">Allowed: SELECT, SHOW, DESCRIBE, EXPLAIN</small><div class="d-flex gap-2"><select class="form-select form-select-sm" id="query-example" aria-label="Choose a query example"><option value="">Choose example</option><?php foreach ($queryExamples as $label => $example): ?><option value="<?= e($example) ?>"><?= e($label) ?></option><?php endforeach; ?></select><button class="btn btn-outline-secondary btn-sm" id="load-query-example" type="button">Load</button><button class="btn btn-dark" type="submit">Execute query</button></div></div></form><?php if ($error): ?><div class="alert <?= str_starts_with((string) $error, 'Only') ? 'alert-warning' : 'alert-danger' ?> border-0"><?= e($error) ?></div><?php endif; ?><?php if ($rows): ?><div class="panel"><h2 class="h5 mb-3"><?= e(count($rows)) ?> result rows</h2><div class="table-responsive"><table class="table align-middle"><thead><tr><?php foreach (array_keys($rows[0]) as $column): ?><th><?= e($column) ?></th><?php endforeach; ?></tr></thead><tbody><?php foreach ($rows as $row): ?><tr><?php foreach ($row as $value): ?><td><?= e($value) ?></td><?php endforeach; ?></tr><?php endforeach; ?></tbody></table></div></div><?php endif; ?><script>document.querySelector('#load-query-example')?.addEventListener('click', () => { const example = document.querySelector('#query-example'); if (example.value) document.querySelector('#query').value = example.value; });</script><?php pageEnd(); ?>
+?>
+<div class="mb-4"><p class="eyebrow mb-2">Administrator tools</p><h1 class="display-6 fw-semibold mb-2">SQL console</h1><p class="text-secondary mb-0">Run read-only queries against the Quantix database.</p></div>
+<div class="alert alert-warning border-0 small">For safety, data-changing statements such as INSERT, UPDATE, DELETE, DROP, and ALTER are blocked.</div>
+<form method="post" class="panel mb-4">
+    <label class="form-label" for="query">SQL query</label>
+    <textarea class="form-control font-monospace" id="query" name="query" rows="5" placeholder="SELECT * FROM products LIMIT 20"><?= e($query) ?></textarea>
+    <div class="mt-3">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-2">
+            <small class="text-secondary">Allowed: SELECT, SHOW, DESCRIBE, EXPLAIN</small>
+            <button class="btn btn-dark" type="submit">Execute query</button>
+        </div>
+        <div class="d-flex flex-wrap gap-2" aria-label="SQL query examples">
+            <?php foreach ($queryExamples as $label => $example): ?>
+                <button class="btn btn-outline-secondary btn-sm query-example" type="button" data-query="<?= e($example) ?>"><?= e($label) ?></button>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</form>
+<?php if ($error): ?><div class="alert <?= str_starts_with((string) $error, 'Only') ? 'alert-warning' : 'alert-danger' ?> border-0"><?= e($error) ?></div><?php endif; ?>
+<?php if ($rows): ?><div class="panel"><h2 class="h5 mb-3"><?= e(count($rows)) ?> result rows</h2><div class="table-responsive"><table class="table align-middle"><thead><tr><?php foreach (array_keys($rows[0]) as $column): ?><th><?= e($column) ?></th><?php endforeach; ?></tr></thead><tbody><?php foreach ($rows as $row): ?><tr><?php foreach ($row as $value): ?><td><?= e($value) ?></td><?php endforeach; ?></tr><?php endforeach; ?></tbody></table></div></div><?php endif; ?>
+<script>document.querySelectorAll('.query-example').forEach((button) => button.addEventListener('click', () => { const query = document.querySelector('#query'); query.value = button.dataset.query ?? ''; query.focus(); query.dispatchEvent(new Event('input')); }));</script>
+<?php pageEnd(); ?>
