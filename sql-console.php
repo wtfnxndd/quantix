@@ -17,6 +17,7 @@ $queryExamples = [
 ];
 $query = trim($_POST['query'] ?? '');
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $query !== '') {
+    verifyCsrf();
     $normalized = strtoupper(ltrim($query));
     $status = 'SUCCESS';
     $rowCount = 0;

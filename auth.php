@@ -13,6 +13,28 @@ function currentUser(): ?array
     return $_SESSION['user'] ?? null;
 }
 
+function csrfToken(): string
+{
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+function csrfField(): string
+{
+    return '<input type="hidden" name="csrf_token" value="' . e(csrfToken()) . '">';
+}
+
+function verifyCsrf(): void
+{
+    $submitted = $_POST['csrf_token'] ?? '';
+    if (!is_string($submitted) || !hash_equals(csrfToken(), $submitted)) {
+        http_response_code(419);
+        exit('The form has expired. Refresh the page and try again.');
+    }
+}
+
 function requireAuth(): void
 {
     if (!currentUser()) {

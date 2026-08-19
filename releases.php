@@ -7,6 +7,7 @@ require __DIR__ . '/layout.php';
 $database = db();
 $message = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrf();
     $statement = $database->prepare('INSERT INTO releases (version, title, notes, status, release_date, created_by) VALUES (?, ?, ?, ?, ?, ?)');
     $statement->execute([trim($_POST['version']), trim($_POST['title']), trim($_POST['notes']), $_POST['status'], $_POST['release_date'] ?: null, currentUser()['id']]);
     $message = 'Release added to the roadmap.';

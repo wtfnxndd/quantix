@@ -9,6 +9,7 @@ $database = db();
 $message = null;
 $error = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+	verifyCsrf();
 	$name = trim($_POST['name'] ?? '');
 	$email = strtolower(trim($_POST['email'] ?? ''));
 	$password = $_POST['password'] ?? '';

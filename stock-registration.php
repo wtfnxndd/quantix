@@ -7,6 +7,7 @@ require __DIR__ . '/layout.php';
 $database = db();
 $message = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrf();
     $category = trim($_POST['category']);
     $sku = trim($_POST['sku']) ?: generateSku($database, $category);
     $statement = $database->prepare('INSERT INTO products (name, sku, category, stock_type, unit, reorder_level) VALUES (?, ?, ?, ?, ?, ?)');

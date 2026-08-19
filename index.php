@@ -12,6 +12,7 @@ $movements = [];
 $lowStock = [];
 $stockByCategory = [];
 $movementTrend = [];
+$trendDays = in_array((int) ($_GET['days'] ?? 7), [7, 30, 90], true) ? (int) $_GET['days'] : 7;
 
 try {
     $database = db();
@@ -62,7 +63,7 @@ try {
                 SUM(CASE WHEN movement_type = 'IN' THEN ABS(quantity) ELSE 0 END) AS inbound,
                 SUM(CASE WHEN movement_type = 'OUT' THEN ABS(quantity) ELSE 0 END) AS outbound
          FROM inventory_movements
-         WHERE movement_date >= CURRENT_DATE - INTERVAL 6 DAY
+         WHERE movement_date >= CURRENT_DATE - INTERVAL " . ($trendDays - 1) . " DAY
          GROUP BY DATE(movement_date) ORDER BY movement_day"
     )->fetchAll();
 } catch (Throwable $exception) {
@@ -128,14 +129,14 @@ function movementClass(string $type): string
 
     <section class="row g-4 mb-4">
         <div class="col-lg-7"><div class="panel chart-panel"><div class="panel-heading"><div><p class="eyebrow mb-1">Current balance</p><h2 class="h5 mb-0">Stock by category</h2></div><span class="chart-note">Live data</span></div><div class="chart-wrap"><canvas id="stock-category-chart" aria-label="Stock by category chart"></canvas></div></div></div>
-        <div class="col-lg-5"><div class="panel chart-panel"><div class="panel-heading"><div><p class="eyebrow mb-1">Last seven days</p><h2 class="h5 mb-0">Movement activity</h2></div><span class="chart-note">Units</span></div><div class="chart-wrap"><canvas id="movement-trend-chart" aria-label="Movement activity chart"></canvas></div></div></div>
+        <div class="col-lg-5"><div class="panel chart-panel"><div class="panel-heading"><div><p class="eyebrow mb-1">Last <?= e($trendDays) ?> days</p><h2 class="h5 mb-0">Movement activity</h2></div><form method="get"><label class="visually-hidden" for="dashboard-days">Activity period</label><select class="form-select form-select-sm" id="dashboard-days" name="days" onchange="this.form.submit()"><option value="7" <?= $trendDays === 7 ? 'selected' : '' ?>>7 days</option><option value="30" <?= $trendDays === 30 ? 'selected' : '' ?>>30 days</option><option value="90" <?= $trendDays === 90 ? 'selected' : '' ?>>90 days</option></select></form></div><div class="chart-wrap"><canvas id="movement-trend-chart" aria-label="Movement activity chart"></canvas></div></div></div>
     </section>
 
     <div class="row g-4">
         <section class="col-xl-8">
             <div class="panel h-100">
                 <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
-                    <div><h2 class="h5 mb-1">Recent movement</h2><p class="small text-secondary mb-0">The latest signals from your inventory network.</p></div>
+                    <div><h2 class="h5 mb-1">Recent movement</h2><p class="small text-secondary mb-0">The latest signals from your inventory network.</p></div><a class="btn btn-sm btn-outline-secondary" href="movements.php">View full ledger</a>
                     <select id="movement-filter" class="form-select form-select-sm filter-select" aria-label="Filter movement type">
                         <option value="ALL">All movement</option><option value="IN">Inbound</option><option value="OUT">Outbound</option><option value="TRANSFER">Transfers</option><option value="ADJUSTMENT">Adjustments</option>
                     </select>

@@ -10,6 +10,7 @@ $products = $database->query('SELECT id, name, sku FROM products ORDER BY name')
 $warehouses = $database->query('SELECT id, name, code FROM warehouses ORDER BY name')->fetchAll();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrf();
     try {
         $productId = (int) $_POST['product_id'];
         $warehouseId = (int) $_POST['warehouse_id'];

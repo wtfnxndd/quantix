@@ -16,6 +16,7 @@ if (!$customer) {
 $message = null;
 $error = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrf();
     try {
         if (($_POST['action'] ?? '') === 'delete') {
             $check = $database->prepare('SELECT COUNT(*) FROM sales_orders WHERE customer_id = ?');

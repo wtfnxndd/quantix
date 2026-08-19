@@ -7,6 +7,7 @@ require __DIR__ . '/layout.php';
 $database = db();
 $message = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrf();
     $statement = $database->prepare('INSERT INTO warehouses (name, code) VALUES (?, ?)');
     $statement->execute([trim($_POST['name']), strtoupper(trim($_POST['code']))]);
     $message = 'Warehouse added to the network.';

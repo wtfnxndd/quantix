@@ -7,6 +7,7 @@ require __DIR__ . '/layout.php';
 $database = db();
 $message = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrf();
     $statement = $database->prepare('INSERT INTO customers (name, code, email, phone, address) VALUES (?, ?, ?, ?, ?)');
     $statement->execute([trim($_POST['name']), strtoupper(trim($_POST['code'])), trim($_POST['email']), trim($_POST['phone']), trim($_POST['address'])]);
     $message = 'Customer added successfully.';
