@@ -15,9 +15,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stockType = trim((string) ($_POST['stock_type'] ?? ''));
     $unit = trim((string) ($_POST['unit'] ?? ''));
     $reorderLevel = filter_var($_POST['reorder_level'] ?? null, FILTER_VALIDATE_FLOAT);
-    $allowedCategories = ['Groceries', 'Personal Care', 'Household', 'Cleaning', 'Electronics', 'Stationery'];
-    $allowedStockTypes = ['Raw Materials', 'Finished Goods', 'Consumables', 'Packaging', 'Spare Parts', 'Safety Equipment', 'Office Supplies', 'MRO Supplies'];
-    $allowedUnits = ['units', 'bottles', 'bags', 'bars', 'tubes', 'packs', 'boxes', 'books'];
+    $allowedCategories = ['Groceries', 'Personal Care', 'Household', 'Cleaning', 'Electronics', 'Stationery', 'Beverages', 'Bakery', 'Frozen Foods', 'Fresh Produce', 'Medical Supplies', 'Automotive', 'Hardware', 'Furniture', 'Apparel', 'Footwear', 'Beauty', 'Pet Supplies', 'Garden', 'Seasonal'];
+    $allowedStockTypes = ['Raw Materials', 'Finished Goods', 'Consumables', 'Packaging', 'Spare Parts', 'Safety Equipment', 'Office Supplies', 'MRO Supplies', 'Work in Progress', 'Maintenance Supplies', 'Cleaning Supplies', 'Promotional Items', 'Tools', 'Equipment', 'Components', 'Accessories', 'Samples', 'Returns', 'Damaged Goods', 'Assets'];
+    $allowedUnits = ['units', 'bottles', 'bags', 'bars', 'tubes', 'packs', 'boxes', 'books', 'pieces', 'cartons', 'cases', 'kilograms', 'grams', 'litres', 'millilitres', 'metres', 'rolls', 'pairs', 'sets', 'pallets'];
     if ($name === '' || strlen($name) > 160 || !in_array($category, $allowedCategories, true) || $sku === '' || strlen($sku) > 60 || !preg_match('/^[A-Z0-9-]+$/', $sku) || !in_array($stockType, $allowedStockTypes, true) || !in_array($unit, $allowedUnits, true) || $reorderLevel === false || $reorderLevel < 0 || !is_finite((float) $reorderLevel)) {
         $error = 'Enter a valid item name, SKU, category, stock type, unit, and reorder value.';
     } else {

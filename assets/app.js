@@ -63,3 +63,26 @@ document.querySelector('#movement-search')?.addEventListener('input', () => {
 document.querySelectorAll('input[name="sku"]').forEach((input) => {
     input.removeAttribute('required');
 });
+
+const productChoices = {
+    category: ['Groceries', 'Personal Care', 'Household', 'Cleaning', 'Electronics', 'Stationery', 'Beverages', 'Bakery', 'Frozen Foods', 'Fresh Produce', 'Medical Supplies', 'Automotive', 'Hardware', 'Furniture', 'Apparel', 'Footwear', 'Beauty', 'Pet Supplies', 'Garden', 'Seasonal'],
+    stock_type: ['Raw Materials', 'Finished Goods', 'Consumables', 'Packaging', 'Spare Parts', 'Safety Equipment', 'Office Supplies', 'MRO Supplies', 'Work in Progress', 'Maintenance Supplies', 'Cleaning Supplies', 'Promotional Items', 'Tools', 'Equipment', 'Components', 'Accessories', 'Samples', 'Returns', 'Damaged Goods', 'Assets'],
+    unit: ['units', 'bottles', 'bags', 'bars', 'tubes', 'packs', 'boxes', 'books', 'pieces', 'cartons', 'cases', 'kilograms', 'grams', 'litres', 'millilitres', 'metres', 'rolls', 'pairs', 'sets', 'pallets']
+};
+
+Object.entries(productChoices).forEach(([name, choices]) => {
+    document.querySelectorAll(`select[name="${name}"], input[name="${name}"]`).forEach((field) => {
+        if (field.tagName === 'INPUT') {
+            const select = document.createElement('select');
+            select.className = field.className.replace('form-control', 'form-select');
+            select.name = field.name;
+            select.required = field.required;
+            field.replaceWith(select);
+            field = select;
+        }
+        const current = field.value;
+        field.replaceChildren(new Option(`Choose ${name.replace('_', ' ')}`, ''));
+        choices.forEach((choice) => field.add(new Option(choice, choice)));
+        if (current && choices.includes(current)) field.value = current;
+    });
+});
