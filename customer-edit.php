@@ -29,8 +29,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: customers.php?deleted=1');
             exit;
         }
+        $name = trim((string) ($_POST['name'] ?? ''));
+        $code = strtoupper(trim((string) ($_POST['code'] ?? '')));
+        $email = trim((string) ($_POST['email'] ?? ''));
+        $phone = trim((string) ($_POST['phone'] ?? ''));
+        $address = trim((string) ($_POST['address'] ?? ''));
+        if ($name === '' || strlen($name) > 160 || !preg_match('/^[A-Z0-9-]{2,40}$/', $code) || ($email !== '' && (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 160)) || strlen($phone) > 40 || strlen($address) > 255) {
+            throw new InvalidArgumentException('Enter a valid customer name, code, email, phone, and address.');
+        }
         $update = $database->prepare('UPDATE customers SET name = ?, code = ?, email = ?, phone = ?, address = ? WHERE id = ?');
-        $update->execute([trim($_POST['name']), strtoupper(trim($_POST['code'])), trim($_POST['email']), trim($_POST['phone']), trim($_POST['address']), $customerId]);
+        $update->execute([$name, $code, $email, $phone, $address, $customerId]);
         $message = 'Customer updated successfully.';
         $statement->execute([$customerId]);
         $customer = $statement->fetch();

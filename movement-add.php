@@ -12,15 +12,16 @@ $warehouses = $database->query('SELECT id, name, code FROM warehouses ORDER BY n
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrf();
     try {
-        $productId = (int) $_POST['product_id'];
-        $warehouseId = (int) $_POST['warehouse_id'];
+        $productId = filter_var($_POST['product_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        $warehouseId = filter_var($_POST['warehouse_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         $destinationId = (int) ($_POST['destination_id'] ?? 0);
-        $type = $_POST['movement_type'];
-        $quantity = (float) $_POST['quantity'];
+        $type = $_POST['movement_type'] ?? '';
+        $quantityInput = trim((string) ($_POST['quantity'] ?? ''));
+        $quantity = is_numeric($quantityInput) ? (float) $quantityInput : 0.0;
         $quantity = $type === 'IN' || $type === 'TRANSFER' ? abs($quantity) : ($type === 'OUT' ? -abs($quantity) : $quantity);
-        $reference = trim($_POST['reference']);
-        if (!in_array($type, ['IN', 'OUT', 'TRANSFER', 'ADJUSTMENT'], true) || $quantity === 0 || $reference === '' || ($type === 'TRANSFER' && ($destinationId === $warehouseId || $destinationId === 0))) {
-            throw new InvalidArgumentException('Choose a type, enter a non-zero quantity, and provide a reference.');
+        $reference = trim((string) ($_POST['reference'] ?? ''));
+        if ($productId === false || $warehouseId === false || !in_array($type, ['IN', 'OUT', 'TRANSFER', 'ADJUSTMENT'], true) || !is_finite($quantity) || $quantity === 0 || strlen($reference) > 80 || preg_match('/[\x00-\x1F\x7F]/', $reference) || $reference === '' || ($type === 'TRANSFER' && ($destinationId === $warehouseId || $destinationId === 0))) {
+            throw new InvalidArgumentException('Choose valid product and warehouse values, enter a non-zero quantity, and provide a reference of 80 characters or fewer.');
         }
 
         $latest = $database->prepare('SELECT stock_after FROM inventory_movements WHERE product_id = ? AND warehouse_id = ? ORDER BY movement_date DESC, id DESC LIMIT 1');

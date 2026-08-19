@@ -14,8 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 	$email = strtolower(trim($_POST['email'] ?? ''));
 	$password = $_POST['password'] ?? '';
 	$role = $_POST['role'] ?? 'staff';
-	if ($name === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($password) < 6 || !in_array($role, ['admin', 'staff'], true)) {
-		$error = 'Enter a name, valid email, password of at least 6 characters, and a valid role.';
+	if ($name === '' || strlen($name) > 120 || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 160 || strlen($password) < 8 || strlen($password) > 128 || !in_array($role, ['admin', 'staff'], true)) {
+		$error = 'Enter a name, valid email, password of 8 to 128 characters, and a valid role.';
 	} else {
 		try {
 			$statement = $database->prepare('INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)');
