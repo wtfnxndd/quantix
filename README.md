@@ -64,7 +64,7 @@ Change these passwords before using Quantix outside a local demo.
 - Login: `http://localhost/Quantix/login.php`
 - Dashboard: `http://localhost/Quantix/`
 - Stock registration: `http://localhost/Quantix/stock-registration.php`
-- Stock records: `http://localhost/Quantix/stock-records.php`
+- Stock movements: `http://localhost/Quantix/movements.php`
 - Products: `http://localhost/Quantix/products.php`
 - Warehouses: `http://localhost/Quantix/warehouses.php`
 - Customers: `http://localhost/Quantix/customers.php`
