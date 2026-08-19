@@ -1,0 +1,20 @@
+<?php
+
+declare(strict_types=1);
+require __DIR__ . '/db.php';
+require __DIR__ . '/layout.php';
+
+$database = db();
+$message = null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $category = trim($_POST['category']);
+    $sku = trim($_POST['sku']) ?: generateSku($database, $category);
+    $statement = $database->prepare('INSERT INTO products (name, sku, category, stock_type, unit, reorder_level) VALUES (?, ?, ?, ?, ?, ?)');
+    $statement->execute([trim($_POST['name']), $sku, $category, trim($_POST['stock_type']), trim($_POST['unit']), (float) $_POST['reorder_level']]);
+    $message = 'Product added to the catalog.';
+}
+$products = $database->query("SELECT p.*, COALESCE(SUM(latest.stock_after), 0) AS stock FROM products p LEFT JOIN (SELECT m.product_id, m.warehouse_id, m.stock_after FROM inventory_movements m WHERE NOT EXISTS (SELECT 1 FROM inventory_movements newer WHERE newer.product_id = m.product_id AND newer.warehouse_id = m.warehouse_id AND (newer.movement_date > m.movement_date OR (newer.movement_date = m.movement_date AND newer.id > m.id)))) latest ON latest.product_id = p.id GROUP BY p.id ORDER BY p.name")->fetchAll();
+pageStart('Products', 'products');
+?><div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4"><div><p class="eyebrow mb-2">Catalog control</p><h1 class="display-6 fw-semibold mb-2">Products</h1><p class="text-secondary mb-0">Track SKUs, units, stock types, and reorder thresholds.</p></div><button class="btn btn-dark" data-bs-toggle="collapse" data-bs-target="#add-product">+ Add product</button></div>
+<?php if ($message): ?><div class="alert alert-success border-0"><?= e($message) ?></div><?php endif; ?><div class="collapse mb-4" id="add-product"><form method="post" class="panel row g-3"><div class="col-md-4"><label class="form-label">Product name</label><input class="form-control" name="name" required></div><div class="col-md-2"><label class="form-label">SKU <small class="text-secondary">(optional)</small></label><input class="form-control" name="sku" placeholder="Auto-generated"></div><div class="col-md-2"><label class="form-label">Category</label><input class="form-control" name="category" required></div><div class="col-md-2"><label class="form-label">Stock type</label><select class="form-select" name="stock_type" required><?php foreach (['Raw Materials', 'Finished Goods', 'Consumables', 'Packaging', 'Spare Parts', 'Safety Equipment', 'Office Supplies', 'MRO Supplies'] as $stockType): ?><option><?= e($stockType) ?></option><?php endforeach; ?></select></div><div class="col-md-1"><label class="form-label">Unit</label><input class="form-control" name="unit" value="units" required></div><div class="col-md-1"><label class="form-label">Reorder</label><input class="form-control" type="number" min="0" step="0.01" name="reorder_level" value="0" required></div><div class="col-12"><button class="btn btn-success">Save product</button></div></form></div>
+<div class="panel"><div class="table-responsive"><table class="table align-middle mb-0"><thead><tr><th>Product</th><th>Classification</th><th>Unit</th><th class="text-end">Stock</th><th class="text-end">Reorder level</th><th>Status</th></tr></thead><tbody><?php foreach ($products as $product): ?><tr><td><strong><?= e($product['name']) ?></strong><small class="d-block text-secondary"><?= e($product['sku']) ?></small></td><td><span class="badge text-bg-light"><?= e($product['stock_type']) ?></span><small class="d-block text-secondary mt-1"><?= e($product['category']) ?></small></td><td><?= e($product['unit']) ?></td><td class="text-end fw-semibold"><?= e($product['stock']) ?></td><td class="text-end"><?= e($product['reorder_level']) ?></td><td><?= (float) $product['stock'] <= (float) $product['reorder_level'] ? '<span class="badge text-bg-danger">Reorder</span>' : '<span class="badge text-bg-success">Healthy</span>' ?></td></tr><?php endforeach; ?></tbody></table></div></div><?php pageEnd(); ?>
